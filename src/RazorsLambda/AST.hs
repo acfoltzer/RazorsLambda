@@ -23,7 +23,7 @@ data Import = Import Id
 data Decl = Decl Id [(Id, Type)] Type Expr
   deriving Show
 
-data Const = CInteger Integer | CFalse | CTrue | CUnit
+data Const = CInteger Integer | CBool Bool | CUnit
   deriving Show
 
 data Expr
@@ -34,7 +34,6 @@ data Expr
   | EUnop Unop Expr
   | EBinop Binop Expr Expr
   | EIfThenElse Expr Expr Expr
-  | EFix Expr
   deriving Show
 
 isAtomicExpr :: Expr -> Bool
@@ -87,8 +86,8 @@ instance PP Decl where
 instance PP Const where
   pp = annotate AnnConst . \case
     CInteger i -> integer i
-    CFalse -> "False"
-    CTrue -> "True"
+    CBool True -> "true"
+    CBool False -> "false"
     CUnit -> "()"
 
 instance PP Expr where
@@ -104,7 +103,6 @@ instance PP Expr where
       -> (annotate AnnKeyword "if")   <+> pp e1 <+>
          (annotate AnnKeyword "then") <+> pp e2 <+>
          (annotate AnnKeyword "else") <+> pp e3
-    EFix e -> (annotate AnnKeyword "fix") <+> pp e
 
 instance PP Unop where
   pp = annotate AnnKeyword . \case

@@ -70,8 +70,7 @@ runTC m = runReader Map.empty (runExceptionT (unTC m))
 typeCheckConst :: Const -> TypeCheck Type
 typeCheckConst = \case
   CInteger _ -> return TInteger
-  CFalse     -> return TBool
-  CTrue      -> return TBool
+  CBool _    -> return TBool
   CUnit      -> return TUnit
 
 typeCheckUnop :: Unop -> TypeCheck Type
@@ -139,16 +138,6 @@ typeCheckExpr = \case
     t3 <- typeCheckExpr e3
     unless (t2 == t3) $ raise (TCMismatch e3 t2 t3)
     return t2
-
-  EFix e -> do
-    t <- typeCheckExpr e
-    case t of
-      TFun (TFun tArg tRet1) tRet2
-        | tArg == tRet1 && tArg == tRet2
-          -> return t
-        | otherwise
-          -> raise (TCMismatch e ((tArg ~> tArg) ~> tArg) t)
-      _ -> raise (TCNonFun e t)
 
 typeCheckDecl :: Decl -> TypeCheck Type
 typeCheckDecl = \case
