@@ -22,7 +22,7 @@ data TCError
   = TCMismatch Expr Type Type -- ^ decl, expr, expected, actual
   | TCNonFun Expr Type -- ^ expr expected function, actual
   | TCUnbound Id -- ^ unbound id
-  deriving Show
+  deriving (Show, Eq)
 
 instance PP TCError where
   pp = \case

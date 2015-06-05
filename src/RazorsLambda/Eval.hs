@@ -14,7 +14,10 @@ import MonadLib hiding (Id)
 import MonadLib.Derive
 import MonadLib.Monads hiding (Id)
 
+import Text.PrettyPrint.Annotated.Leijen hiding ((<$>))
+
 import RazorsLambda.AST
+import RazorsLambda.PP
 
 data Value = VInteger Integer | VBool Bool | VUnit | VClos Id Expr EvalEnv
 
@@ -24,6 +27,14 @@ instance Show Value where
     VBool b        -> "VBool " ++ show b
     VUnit          -> "VUnit"
     VClos x e _env -> "VClos " ++ show x ++ " " ++ show e ++ " <env>"
+
+instance PP Value where
+  pp = \case
+    VInteger i  -> integer i
+    VBool True  -> text "true"
+    VBool False -> text "false"
+    VUnit       -> text "()"
+    VClos _ _ _ -> text "<closure>"
 
 type EvalEnv = Map Id Value
 

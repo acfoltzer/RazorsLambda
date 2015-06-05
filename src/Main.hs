@@ -1,10 +1,20 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import RazorsLambda
+import Control.Monad
+import Text.PrettyPrint.Annotated.Leijen
+import Text.Trifecta.Result
+
+import RazorsLambda.Eval
+import RazorsLambda.Parser
+import RazorsLambda.PP
+import RazorsLambda.TypeCheck
 
 main :: IO ()
 main = do
-  Right m <- parseModule <$> readFile "examples/Factorial.rzl"
-  let Right e = parseExpr "fact5"
-      Right v = evalExprIn m e
-  consoleOutput v
+  Success m <- parseModuleFromFile "example/Factorial.rzl"
+  guard (Right () == runTC (typeCheckModule m))
+  let Success e = parseExpr "fact 5"
+      (Right v, _env) = runEval (do addModule m; evalExpr e)
+  putDoc (pp v)
+  putStrLn ""

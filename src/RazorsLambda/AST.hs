@@ -15,16 +15,16 @@ instance IsString Id where
   fromString = Id
 
 data Module = Module Id [Import] [Decl]
-  deriving Show
+  deriving (Show, Eq)
 
 data Import = Import Id
-  deriving Show
+  deriving (Show, Eq)
 
 data Decl = Decl Id [(Id, Type)] Type Expr
-  deriving Show
+  deriving (Show, Eq)
 
 data Const = CInteger Integer | CBool Bool | CUnit
-  deriving Show
+  deriving (Show, Eq)
 
 data Expr
   = EVar Id
@@ -34,7 +34,7 @@ data Expr
   | EUnop Unop Expr
   | EBinop Binop Expr Expr
   | EIfThenElse Expr Expr Expr
-  deriving Show
+  deriving (Show, Eq)
 
 isAtomicExpr :: Expr -> Bool
 isAtomicExpr = \case
@@ -43,10 +43,10 @@ isAtomicExpr = \case
   _        -> False
 
 data Unop = BNot
-  deriving Show
+  deriving (Show, Eq)
 
 data Binop = BAnd | BOr | BXor | IPlus | IMinus | ITimes | IDiv | IEq
-  deriving Show
+  deriving (Show, Eq)
 
 isInfixBinop :: Binop -> Bool
 isInfixBinop = \case

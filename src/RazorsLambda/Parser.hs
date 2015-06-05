@@ -2,25 +2,35 @@
 module RazorsLambda.Parser where
 
 import Control.Applicative hiding (Const)
-import Control.Lens hiding (Const)
+import Control.Lens hiding (op, Const)
+import Control.Monad.IO.Class
 import qualified Data.HashSet as HS
 import Data.Text (Text)
-import qualified Data.Text as Text
+import qualified Data.Text.Encoding as Text
 
 import Prelude hiding (const)
 
-import Text.Parser.Char
 import Text.Parser.Combinators
 import Text.Parser.Expression
 import Text.Parser.Token
 import Text.Parser.Token.Style
+import Text.Trifecta.Delta
 import Text.Trifecta.Parser
 import Text.Trifecta.Result
 
 import RazorsLambda.AST
 
+parseModule :: Text -> Result Module
+parseModule = parseByteString modul (Lines 0 0 0 0) . Text.encodeUtf8
+
+parseModuleFromFile :: MonadIO m => FilePath -> m (Result Module)
+parseModuleFromFile fp = parseFromFileEx modul fp
+
+parseExpr :: Text -> Result Expr
+parseExpr = parseByteString expr (Lines 0 0 0 0) . Text.encodeUtf8
+
 modul :: Parser Module
-modul = Module <$> (reserved "module" *> identifier <* reserved "where" <* whiteSpace)
+modul = Module <$> (reserved "module" *> identifier <* reserved "where")
                <*> (many impt)
                <*> (many decl)
                <*  eof
@@ -93,6 +103,7 @@ const =  CInteger <$> natural
      <|> textSymbol "false" *> pure (CBool False)
      <|> textSymbol "()"    *> pure CUnit
 
+idStyle :: IdentifierStyle Parser
 idStyle = emptyIdents & styleReserved .~ HS.fromList [
     ":", "=", "->", "+", "-", "*", "/", "==", "()", "\\"
   , "true", "false", "~", "&", "|", "^", "if", "then", "else"
@@ -103,7 +114,11 @@ idStyle = emptyIdents & styleReserved .~ HS.fromList [
 identifier :: Parser Id
 identifier = ident idStyle
 
+reserved :: String -> Parser ()
 reserved = reserve idStyle
 
-binary  name fun assoc = Infix (fun <* reserved name) assoc
-prefix  name fun       = Prefix (fun <* reserved name)
+binary :: String -> Parser (a -> a -> a) -> Assoc -> Operator Parser a
+binary name fun assoc = Infix (fun <* reserved name) assoc
+
+prefix :: String -> Parser (a -> a) -> Operator Parser a
+prefix name fun       = Prefix (fun <* reserved name)
