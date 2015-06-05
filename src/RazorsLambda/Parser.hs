@@ -38,11 +38,7 @@ decl = Decl <$> identifier
   args = manyTill (parens ((,) <$> identifier <*> (colon *> typ))) colon
 
 expr :: Parser Expr
-expr =  EIfThenElse <$> (reserved "if"   *> expr)
-                    <*> (reserved "then" *> expr)
-                    <*> (reserved "else" *> expr)
-    <|> EApp <$> expr' <*> expr'
-    <|> buildExpressionParser table expr'
+expr = buildExpressionParser table expr'
     <?> "expression"
   where
   table = [
@@ -60,11 +56,18 @@ expr =  EIfThenElse <$> (reserved "if"   *> expr)
   binop op = pure (EBinop op)
 
 expr' :: Parser Expr
-expr' =  parens expr
-     <|> EConst <$> const
-     <|> EVar <$> identifier
-     <|> lam
-     <?> "simple expression"
+expr' =  foldl1 EApp <$> some expr''
+     <|> expr''
+
+expr'' :: Parser Expr
+expr'' =  parens expr
+      <|> EConst <$> const
+      <|> EVar <$> identifier
+      <|> lam
+      <|> EIfThenElse <$> (reserved "if"   *> expr)
+                      <*> (reserved "then" *> expr)
+                      <*> (reserved "else" *> expr)
+      <?> "simple expression"
 
 lam :: Parser Expr
 lam =  reserved "\\"
@@ -85,7 +88,7 @@ typ' =  parens typ
     <|> reserved "integer" *> pure TInteger
 
 const :: Parser Const
-const =  CInteger <$> integer
+const =  CInteger <$> natural
      <|> textSymbol "true"  *> pure (CBool True)
      <|> textSymbol "false" *> pure (CBool False)
      <|> textSymbol "()"    *> pure CUnit

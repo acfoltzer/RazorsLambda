@@ -1,9 +1,9 @@
 module Factorial where
 
 fact (x : integer) : integer = {
-  if (x == 1) then 1 else (x * fact (x - 1)))
+  if (x == 1) then 1 else (x * fact (x - 1))
 }
 
-fact5 = {
+fact5 : integer = {
   fact 5
 }
