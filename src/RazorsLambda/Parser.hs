@@ -21,13 +21,13 @@ import Text.Trifecta.Result
 import RazorsLambda.AST
 
 parseModule :: Text -> Result Module
-parseModule = parseByteString modul (Lines 0 0 0 0) . Text.encodeUtf8
+parseModule = parseByteString (modul <* eof) (Lines 0 0 0 0) . Text.encodeUtf8
 
 parseModuleFromFile :: MonadIO m => FilePath -> m (Result Module)
-parseModuleFromFile fp = parseFromFileEx modul fp
+parseModuleFromFile fp = parseFromFileEx (modul <* eof) fp
 
 parseExpr :: Text -> Result Expr
-parseExpr = parseByteString expr (Lines 0 0 0 0) . Text.encodeUtf8
+parseExpr = parseByteString (expr <* eof) (Lines 0 0 0 0) . Text.encodeUtf8
 
 modul :: Parser Module
 modul = Module <$> (reserved "module" *> identifier <* reserved "where")
@@ -70,7 +70,8 @@ expr' =  foldl1 EApp <$> some expr''
      <|> expr''
 
 expr'' :: Parser Expr
-expr'' =  parens expr
+expr'' =  reserved "()" *> pure (EConst CUnit)
+      <|> parens expr
       <|> EConst <$> const
       <|> EVar <$> identifier
       <|> lam
@@ -99,9 +100,8 @@ typ' =  parens typ
 
 const :: Parser Const
 const =  CInteger <$> natural
-     <|> textSymbol "true"  *> pure (CBool True)
-     <|> textSymbol "false" *> pure (CBool False)
-     <|> textSymbol "()"    *> pure CUnit
+     <|> reserved "true"  *> pure (CBool True)
+     <|> reserved "false" *> pure (CBool False)
 
 idStyle :: IdentifierStyle Parser
 idStyle = emptyIdents & styleReserved .~ HS.fromList [

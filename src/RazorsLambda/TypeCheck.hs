@@ -67,6 +67,9 @@ instance RunReaderM TypeCheck TCEnv where
 runTC :: TypeCheck a -> Either TCError a
 runTC m = runReader Map.empty (runExceptionT (unTC m))
 
+runTCIn :: TCEnv -> TypeCheck a -> Either TCError a
+runTCIn env m = runTC (local env m)
+
 typeCheckConst :: Const -> TypeCheck Type
 typeCheckConst = \case
   CInteger _ -> return TInteger
@@ -148,7 +151,7 @@ typeCheckDecl = \case
     unless (ret == ret') $ raise (TCMismatch e ret ret')
     return t
 
-typeCheckModule :: Module -> TypeCheck ()
+typeCheckModule :: Module -> TypeCheck TCEnv
 typeCheckModule = \case
   Module _ _is decls -> do
     let tcDecl d@(Decl x _ _ _) = mapReader (Map.delete x) $ typeCheckDecl d
@@ -157,4 +160,4 @@ typeCheckModule = \case
         -- shadow existing bindings
         extend env = Map.union (Map.fromList tDecls) env
     _ <- mapReader extend (mapM tcDecl decls)
-    return ()
+    return (extend Map.empty)

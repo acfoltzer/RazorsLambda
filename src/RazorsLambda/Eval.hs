@@ -41,9 +41,13 @@ type EvalEnv = Map Id Value
 data EvalError = EDivByZero
   deriving Show
 
-newtype Eval a = Eval { unEval :: ExceptionT EvalError (State EvalEnv) a }
+instance PP EvalError where
+  pp = \case
+    EDivByZero -> text "Division by zero"
 
-evalIso :: Iso (ExceptionT EvalError (State EvalEnv)) Eval
+newtype Eval a = Eval { unEval :: StateT EvalEnv (Exception EvalError) a }
+
+evalIso :: Iso (StateT EvalEnv (Exception EvalError)) Eval
 evalIso = Iso Eval unEval
 
 instance Functor Eval where
@@ -69,8 +73,11 @@ instance StateM Eval EvalEnv where
 instance MonadFix Eval where
   mfix = derive_mfix evalIso
 
-runEval :: Eval a -> (Either EvalError a, EvalEnv)
-runEval m = runState Map.empty (runExceptionT (unEval m))
+runEval :: Eval a -> (Either EvalError (a, EvalEnv))
+runEval m = runException (runStateT Map.empty (unEval m))
+
+runEvalIn :: EvalEnv -> Eval a -> (Either EvalError (a, EvalEnv))
+runEvalIn env m = runEval (localEnv (const env) m)
 
 localEnv :: (EvalEnv -> EvalEnv) -> Eval a -> Eval a
 localEnv f m = do
@@ -80,15 +87,15 @@ localEnv f m = do
   set env
   return x
 
-addModule :: Module -> Eval ()
-addModule (Module _ _ decls) = do
+evalModule :: Module -> Eval EvalEnv
+evalModule (Module _ _ decls) = do
   env <- get
   let evalDecl' d@(Decl x _ _ _) = do
         vDecl <- evalDecl d
         return (x, vDecl)
   rec set (Map.union (Map.fromList vDecls) env)
       vDecls <- mapM evalDecl' decls
-  return ()
+  get
 
 evalDecl :: Decl -> Eval Value
 evalDecl (Decl x args _ e) = do
