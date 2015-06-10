@@ -18,23 +18,27 @@ import Text.PrettyPrint.Annotated.Leijen hiding ((<$>))
 
 import RazorsLambda.AST
 import RazorsLambda.PP
+import RazorsLambda.TypeCheck
 
-data Value = VInteger Integer | VBool Bool | VUnit | VClos Id Expr EvalEnv
+-- | Standard except for the 'Type' in @VClos@ which we use as
+-- meta-information for printing and serialization
+data Value = VInteger Integer | VBool Bool | VUnit | VClos Id Expr EvalEnv Type
 
 instance Show Value where
   show = \case
-    VInteger i     -> "VInteger " ++ show i
-    VBool b        -> "VBool " ++ show b
-    VUnit          -> "VUnit"
-    VClos x e _env -> "VClos " ++ show x ++ " " ++ show e ++ " <env>"
+    VInteger i        -> "VInteger " ++ show i
+    VBool b           -> "VBool " ++ show b
+    VUnit             -> "VUnit"
+    VClos x e _env ty ->
+      "VClos " ++ show x ++ " " ++ show e ++ " <env> " ++ show ty
 
 instance PP Value where
   pp = \case
-    VInteger i  -> integer i
-    VBool True  -> text "true"
-    VBool False -> text "false"
-    VUnit       -> text "()"
-    VClos _ _ _ -> text "<closure>"
+    VInteger i     -> integer i
+    VBool True     -> text "true"
+    VBool False    -> text "false"
+    VUnit          -> text "()"
+    VClos _ _ _ ty -> text "<closure>" <+> colon <+> pp ty
 
 type EvalEnv = Map Id Value
 
@@ -110,14 +114,16 @@ evalExpr = \case
     case mv of
       Just v -> return v
       Nothing -> error "unbound variable during eval"
-  ELam x _ e -> do
+  expr@(ELam x _ e) -> do
+    -- Hack... should really have type-annotated AST
+    let Right ty = runTC (typeCheckExpr expr)
     env <- get
-    return (VClos x e env)
+    return (VClos x e env ty)
   EApp e1 e2 -> do
     v2 <- evalExpr e2
     v1 <- evalExpr e1
     case v1 of
-      VClos x e env -> localEnv (const (Map.insert x v2 env)) (evalExpr e)
+      VClos x e env _ty -> localEnv (const (Map.insert x v2 env)) (evalExpr e)
       _ -> error "non-function in function position during eval"
   EConst c -> evalConst c
   EUnop u e -> do

@@ -12,17 +12,17 @@ import Text.Trifecta.Result
 
 import RazorsLambda.Eval
 import qualified RazorsLambda.Interactive.IO as IO
+import qualified RazorsLambda.Interactive.JSON as JSON
 import RazorsLambda.Parser
 import RazorsLambda.PP
 import RazorsLambda.TypeCheck
 
-main = IO.runRepl
+main' = IO.runRepl
 
-main' :: IO ()
-main' = do
-  forkOS server
-  forkOS client
-  forever (threadDelay (2^20))
+main :: IO ()
+main = do
+  void $ forkOS client
+  JSON.runRepl
 
 server :: IO ()
 server = runZMQ $ do
@@ -39,11 +39,13 @@ client = runZMQ $ do
   liftIO $ putStrLn "[client] coming online"
   req <- socket Req
   connect req "tcp://127.0.0.1:5555"
-  forever $ do
-    send req [] "Ping"
+  void . replicateM 5 $ do
+    send req [] "{\"expr\":\"5 + 5\",\"cmdType\":\"evalExpr\"}"
     msg <- receive req
     liftIO $ putStr "[client] " >> BS.putStrLn msg
     liftIO $ threadDelay (2^20)
+  send req [] "{\"cmdType\":\"exit\"}"
+  close req
 
 {-
 main :: IO ()

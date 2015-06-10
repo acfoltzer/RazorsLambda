@@ -13,6 +13,7 @@ executable razors-lambda
   build-depends:       aeson
                      , annotated-wl-pprint
                      , ansi-wl-pprint >= 0.6
+                     , attoparsec >= 0.13
                      , base >=4.8 && <4.9
                      , bytestring >= 0.10
                      , containers >= 0.5
