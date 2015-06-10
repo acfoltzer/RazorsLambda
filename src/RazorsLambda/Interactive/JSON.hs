@@ -15,6 +15,7 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.Encoding as Text
 import qualified Data.Text.IO as Text
+import Data.Word
 import MonadLib
 --import qualified Text.PrettyPrint.ANSI.Leijen as ANSI
 import System.ZMQ4.Monadic
@@ -100,14 +101,15 @@ instance ToJSON RPCType where
     TFun t1 t2 -> object
       [ "typeType" .= "function", "arg" .= (RPCType t1), "ret" .= (RPCType t2) ]
 
-runRepl :: IO ()
-runRepl = runZMQ $ setup >>= start
+runRepl :: Word16 -> IO ()
+runRepl port = runZMQ $ setup >>= start
   where
 
   setup = do
-    liftIO $ putStrLn "[server] coming online"
+    let addr = "tcp://127.0.0.1:" ++ show port
+    liftIO $ putStrLn ("[server] coming online on interface " ++ addr)
     rep <- socket Rep
-    bind rep "tcp://127.0.0.1:5555"
+    bind rep addr
     return rep
 
   start :: forall z . Socket z Rep -> ZMQ z ()

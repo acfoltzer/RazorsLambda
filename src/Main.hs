@@ -6,7 +6,9 @@ import Control.Monad
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.Map as Map
 import MonadLib
+import System.Environment
 import System.ZMQ4.Monadic
+import Text.Read
 import Text.PrettyPrint.Annotated.Leijen
 import Text.Trifecta.Result
 
@@ -21,8 +23,19 @@ main' = IO.runRepl
 
 main :: IO ()
 main = do
+  args <- getArgs
+  case args of
+    [] -> JSON.runRepl 5555
+    [portStr] ->
+       case readMaybe portStr of
+         Just port -> JSON.runRepl port
+         Nothing -> JSON.runRepl 5555
+    _ -> error "port is the only allowed argument"
+
+mainLoopback :: IO ()
+mainLoopback = do
   void $ forkOS client
-  JSON.runRepl
+  JSON.runRepl 5555
 
 server :: IO ()
 server = runZMQ $ do
