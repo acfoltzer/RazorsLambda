@@ -17,8 +17,8 @@ import qualified Data.Text.Encoding as Text
 import qualified Data.Text.IO as Text
 import Data.Word
 import MonadLib
---import qualified Text.PrettyPrint.ANSI.Leijen as ANSI
 import System.ZMQ4.Monadic
+import qualified Text.PrettyPrint.ANSI.Leijen as ANSI
 
 import RazorsLambda.AST
 import RazorsLambda.Eval
@@ -66,7 +66,7 @@ instance ToJSON RPCResult where
     RUnknownCommand cmd -> object
       [ "resultType" .= "unknownCommand", "command" .= cmd ]
     RParseError err -> object
-      [ "resultType" .= "parseError", "error" .= show err ]
+      [ "resultType" .= "parseError", "error" .= show (ANSI.plain err) ]
     REvalError err -> object
       [ "resultType" .= "evalError", "error" .= show err ]
     RTCError err -> object

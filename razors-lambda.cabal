@@ -8,9 +8,32 @@ category:            Language
 build-type:          Simple
 cabal-version:       >=1.10
 
-executable razors-lambda
+executable razors-lambda-server
   main-is:             Main.hs
   build-depends:       aeson
+                     , annotated-wl-pprint
+                     , ansi-wl-pprint >= 0.6
+                     , attoparsec >= 0.13
+                     , base >=4.8 && <4.9
+                     , bytestring >= 0.10
+                     , containers >= 0.5
+                     , free >= 4.12
+                     , lens >= 4.9
+                     , monadLib
+                     , parsers >= 0.12
+                     , text >= 1.2
+                     , transformers >= 0.4
+                     , trifecta
+                     , unordered-containers >= 0.2
+                     , zeromq4-haskell >= 0.6
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  ghc-options:         -threaded -rtsopts
+
+executable razors-lambda-client
+  main-is:             Main_client.hs
+  build-depends:       aeson
+                     , aeson-pretty
                      , annotated-wl-pprint
                      , ansi-wl-pprint >= 0.6
                      , attoparsec >= 0.13

@@ -7,6 +7,7 @@ import qualified Data.ByteString.Char8 as BS
 import qualified Data.Map as Map
 import MonadLib
 import System.Environment
+import System.IO
 import System.ZMQ4.Monadic
 import Text.Read
 import Text.PrettyPrint.Annotated.Leijen
