@@ -18,6 +18,7 @@ executable razors-lambda-server
                      , bytestring >= 0.10
                      , containers >= 0.5
                      , free >= 4.12
+                     , haskeline >= 0.7
                      , lens >= 4.9
                      , monadLib
                      , parsers >= 0.12
@@ -41,6 +42,7 @@ executable razors-lambda-client
                      , bytestring >= 0.10
                      , containers >= 0.5
                      , free >= 4.12
+                     , haskeline >= 0.7
                      , lens >= 4.9
                      , monadLib
                      , parsers >= 0.12
